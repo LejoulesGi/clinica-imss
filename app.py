@@ -49,84 +49,158 @@ ece_db = {
 }
 
 # --- FUNCIONES ---
-def generar_examen_mental():
-    st.subheader("🧠 Examen Mental")
+# La corrección está aquí: añadimos 'seccion' para crear IDs únicos
+def generar_examen_mental(seccion):
+    st.subheader(f"🧠 Examen Mental ({seccion})")
     col1, col2, col3 = st.columns(3)
     with col1:
-        somatotipo = st.selectbox("Somatotipo", ["mesomorfo", "endomorfo", "ectomorfo"])
-        higiene = st.selectbox("Higiene", ["adecuado", "regular", "malo"])
-        actitud = st.selectbox("Actitud", ["cooperador", "hostil", "indiferente"])
+        # Usamos key=f"nombre_{seccion}" para que no choquen
+        somatotipo = st.selectbox("Somatotipo", ["mesomorfo", "endomorfo", "ectomorfo"], key=f"soma_{seccion}")
+        higiene = st.selectbox("Higiene", ["adecuado", "regular", "malo"], key=f"hig_{seccion}")
+        actitud = st.selectbox("Actitud", ["cooperador", "hostil", "indiferente"], key=f"act_{seccion}")
     with col2:
-        discurso = st.selectbox("Discurso", ["coherente", "disgregado"])
-        pensamiento = st.selectbox("Pensamiento", ["lógico", "desorganizado"])
-        contenido = st.text_input("Contenido", value="niega delirios")
+        discurso = st.selectbox("Discurso", ["coherente", "disgregado"], key=f"disc_{seccion}")
+        pensamiento = st.selectbox("Pensamiento", ["lógico", "desorganizado"], key=f"pens_{seccion}")
+        contenido = st.text_input("Contenido", value="niega delirios", key=f"cont_{seccion}")
     with col3:
-        animo = st.text_input("Ánimo", value="tranquilo")
-        impresion = st.selectbox("Impresión", ["eutímico", "disfórico", "ansioso"])
-        juicio = st.selectbox("Juicio", ["conservado", "desviado"])
-        conciencia = st.selectbox("Conciencia", ["adecuada", "parcial", "nula"])
+        animo = st.text_input("Ánimo", value="tranquilo", key=f"anim_{seccion}")
+        impresion = st.selectbox("Impresión", ["eutímico", "disfórico", "ansioso"], key=f"imp_{seccion}")
+        juicio = st.selectbox("Juicio", ["conservado", "desviado"], key=f"jui_{seccion}")
+        conciencia = st.selectbox("Conciencia", ["adecuada", "parcial", "nula"], key=f"conc_{seccion}")
+    
     return f"Paciente de edad aparente similar a la cronológica con somatotipo {somatotipo}, con {higiene} estado de higiene; sin movimientos anormales. Alerta, {actitud}, reactivo. Orientado en 3 esferas. Discurso {discurso}. Pensamiento {pensamiento}. Contenido: {contenido}. Niega ideación suicida. Ánimo “{animo}”, impresiona {impresion}. Juicio {juicio}. Conciencia enfermedad {conciencia}."
 
 # --- INTERFAZ ---
 st.title("🏥 Gestión Clínica IMSS")
 
 with st.sidebar:
-    nombre = st.text_input("Paciente", "Nombre Apellido")
+    st.header("Datos Paciente")
+    nombre = st.text_input("Nombre Completo", "Nombre Apellido")
     edad = st.number_input("Edad", 18)
-    fecha_ingreso = st.date_input("Ingreso")
+    fecha_ingreso = st.date_input("Fecha Ingreso")
     dias = (date.today() - fecha_ingreso).days
-    st.metric("Estancia", f"{dias} días")
-    dx = st.text_area("Diagnóstico", "F200...")
+    st.metric("Días Estancia", f"{dias} días")
+    dx = st.text_area("Diagnósticos", "F200 Esquizofrenia paranoide + F102 Alcoholismo")
 
 tab1, tab2, tab3 = st.tabs(["Ingreso", "Evolución", "Egreso/Recetas"])
 
+# --- TAB 1: INGRESO ---
 with tab1:
-    motivo = st.text_area("Motivo")
-    pad = st.text_area("Padecimiento")
-    ant = st.text_area("Antecedentes")
-    ment1 = generar_examen_mental()
+    col_i1, col_i2 = st.columns(2)
+    with col_i1:
+        motivo = st.text_area("Motivo Consulta")
+        pad = st.text_area("Padecimiento Actual")
+    with col_i2:
+        ant = st.text_area("Antecedentes")
+    
+    # Llamamos a la función con la llave "ingreso"
+    ment1 = generar_examen_mental("ingreso")
+    
     ana1 = st.text_area("Análisis Ingreso")
-    plan1 = st.text_area("Plan Ingreso")
-    if st.button("Generar Nota Ingreso"):
-        st.code(f"NOTA DE INGRESO\nPaciente: {nombre}\nMotivo: {motivo}\nDX: {dx}\nPADECIMIENTO: {pad}\nANTECEDENTES: {ant}\nEXAMEN MENTAL: {ment1}\nANÁLISIS: {ana1}\nPLAN: {plan1}")
+    plan1 = st.text_area("Plan Inicial")
+    
+    if st.button("Generar Nota Ingreso", key="btn_ingreso"):
+        nota = f"""
+**NOTA DE INGRESO**
+Fecha: {date.today()}
+Paciente: {nombre} | Edad: {edad}
+Motivo: {motivo} | DX: {dx}
 
+**PADECIMIENTO:** {pad}
+**ANTECEDENTES:** {ant}
+**MENTAL:** {ment1}
+**ANÁLISIS:** {ana1}
+**PLAN:** {plan1}
+"""
+        st.code(nota, language="markdown")
+
+# --- TAB 2: EVOLUCIÓN ---
 with tab2:
     subj = st.text_area("Subjetivo")
-    obj = st.text_input("Signos", "TA: 120/80...")
-    ment2 = generar_examen_mental()
-    ana2 = st.text_area("Análisis Evol")
-    plan_txt = st.text_area("Plan (1. Dieta, 2. Meds, 3. Seguridad)")
-    if st.button("Generar Nota Evolución"):
-        st.code(f"NOTA EVOLUCIÓN\nPaciente: {nombre} ({dias} días)\nSUBJETIVO: {subj}\nOBJETIVO: {obj}\nMENTAL: {ment2}\nANÁLISIS: {ana2}\nPLAN: {plan_txt}")
+    obj = st.text_input("Signos Vitales", "TA: 120/80 FC: 80 FR: 20 T: 36.5")
+    
+    # Llamamos a la función con la llave "evolucion"
+    ment2 = generar_examen_mental("evolucion")
+    
+    ana2 = st.text_area("Análisis Evolución")
+    plan_txt = st.text_area("Plan (Dieta, Meds, Seguridad)")
+    
+    if st.button("Generar Nota Evolución", key="btn_evol"):
+        nota = f"""
+**NOTA EVOLUCIÓN**
+Paciente: {nombre} | Estancia: {dias} días
+**SUBJETIVO:** {subj}
+**OBJETIVO:** {obj}
+**MENTAL:** {ment2}
+**ANÁLISIS:** {ana2}
+**PLAN:** {plan_txt}
+"""
+        st.code(nota, language="markdown")
 
+# --- TAB 3: EGRESO ---
 with tab3:
-    resumen = st.text_area("Resumen")
-    ment3 = generar_examen_mental()
+    resumen = st.text_area("Resumen Clínico")
+    
+    # Llamamos a la función con la llave "egreso"
+    ment3 = generar_examen_mental("egreso")
+    
     ana3 = st.text_area("Análisis Alta")
     
     st.subheader("💊 Calculadora ECE")
     if 'meds' not in st.session_state: st.session_state.meds = []
     
-    with st.form("calc"):
-        m = st.selectbox("Fármaco", list(ece_db.keys()))
-        d = st.number_input("Dosis (mg)", 0.0)
-        f = st.text_input("Frecuencia", "cada 24 h")
-        if st.form_submit_button("Agregar"):
+    with st.form("calc_form"):
+        col_c1, col_c2, col_c3 = st.columns(3)
+        with col_c1:
+            m = st.selectbox("Fármaco", list(ece_db.keys()))
+        with col_c2:
+            d = st.number_input("Dosis (mg)", 0.0)
+        with col_c3:
+            f = st.text_input("Frecuencia", "cada 24 h")
+            
+        add = st.form_submit_button("Agregar Medicamento")
+        
+        if add:
             info = ece_db[m]
             try: mg_f = float([x for x in m.split() if x.replace('.','',1).isdigit()][0])
             except: mg_f = 1
-            cajas = math.ceil((d/mg_f*30)/info[0])
-            recetas = math.ceil(cajas/info[1])
-            st.session_state.meds.append(f"{m} {info[2]} VO {f} ({int(d/mg_f*30)} tabs/mes) ({cajas} cajas, {recetas} recetas)")
+            
+            # Cálculo
+            total_tabs = (d / mg_f) * 30
+            cajas = math.ceil(total_tabs / info[0])
+            recetas = math.ceil(cajas / info[1])
+            
+            # Guardar
+            texto_med = f"{m} ({info[2]}) VO {f} ({int(total_tabs)} tabs/mes) ({cajas} cajas/mes, {recetas} recetas)"
+            st.session_state.meds.append(texto_med)
             st.rerun()
             
     if st.session_state.meds:
+        st.write("---")
+        st.write("**Esquema Actual:**")
         for i in st.session_state.meds: st.write(f"- {i}")
-        if st.button("Borrar Todo"):
+        if st.button("Borrar Lista", key="btn_clear"):
             st.session_state.meds = []
             st.rerun()
 
-    if st.button("Generar Egreso"):
-        recetas_txt = "\n".join(st.session_state.meds)
-        st.code(f"NOTA EGRESO\nResumen: {resumen}\nMental: {ment3}\nAnálisis: {ana3}\nRECETAS:\n{recetas_txt}\nPLAN ALTA:\n1. Alta Psiquiatría\n2. Control MF\n3. Urgencias SOS")
+    if st.button("Generar Nota Egreso", key="btn_egreso"):
+        recetas_txt = "\n".join([f"- {x}" for x in st.session_state.meds])
+        nota = f"""
+**NOTA DE EGRESO**
+Paciente: {nombre} | Estancia: {dias} días
+DX: {dx}
 
+**RESUMEN:** {resumen}
+**MENTAL ALTA:** {ment3}
+**ANÁLISIS:** {ana3}
+
+**TRATAMIENTO (RECETAS):**
+{recetas_txt if recetas_txt else "[SIN FÁRMACOS]"}
+
+**PLAN ALTA:**
+1. Alta a domicilio.
+2. Control MF.
+3. Urgencias por datos de alarma.
+"""
+        st.code(nota, language="markdown")
+        
